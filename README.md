@@ -125,11 +125,11 @@ python main.py
 ## Структура проекта
 
 project/
-├── main.py
-├── requirements.txt
-├── .env
-├── .gitignore
-└── README.md
+── main.py
+── requirements.txt
+── .env
+── .gitignore
+── README.md
 
 ---
 
