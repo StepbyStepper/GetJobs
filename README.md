@@ -116,13 +116,9 @@ python main.py
 
 ## Пример результата
 
-+HeadHunter Moscow------------------+
-| Язык | Найдено | Обработано | Средняя зарплата |
-| python | 1068 | 844 | 131819 |
+![project](https://github.com/user-attachments/assets/4c674737-3d74-4058-9588-eacaff1f290e)
 
-+SuperJob Moscow--------------------+
-| Язык | Найдено | Обработано | Средняя зарплата |
-| python | 10 | 7 | 90714 |
+
 
 ---
 
