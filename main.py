@@ -115,7 +115,7 @@ def get_hh_statistics(search_query):
         for vacancy in data["items"]:
             salary = predict_rub_salary_hh(vacancy)
 
-            if salary is not None:
+            if salary:
                 salaries.append(salary)
 
         page += 1
@@ -174,7 +174,7 @@ def get_superjob_statistics(search_query, api_key):
         for vacancy in data["objects"]:
             salary = predict_rub_salary_for_superJob(vacancy)
 
-            if salary is not None:
+            if salary:
                 salaries.append(salary)
 
         if not data["more"]:
