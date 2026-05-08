@@ -74,15 +74,17 @@
 
 ## Установка
 
+```
 git clone https://github.com/StepbyStepper/GetJobs.git
 cd GetJobs
 pip install -r requirements.txt
+```
 
 Файл requirements.txt:
 
-requests
-terminaltables
-python-dotenv
+- requests
+- terminaltables
+- python-dotenv
 
 ---
 
@@ -93,25 +95,26 @@ python-dotenv
 1. Получите ключ: https://api.superjob.ru/
 
 2. Создайте файл .env:
-
+```
 SUPERJOB_API_KEY=ваш_ключ
-
+```
 Важно:
 - без кавычек
 - без пробелов
 - файл должен называться именно .env
 
 3. Добавьте .env в .gitignore:
-
+```
 .env
+.idea/
 __pycache__/
-
+```
 ---
 
 ## Запуск
-
+```
 python main.py
-
+```
 ---
 
 ## Пример результата
@@ -125,11 +128,11 @@ python main.py
 ## Структура проекта
 
 project/
-── main.py
-── requirements.txt
-── .env
-── .gitignore
-── README.md
+- main.py
+- requirements.txt
+- .env
+- .gitignore
+- README.md
 
 ---
 
