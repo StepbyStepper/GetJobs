@@ -1,20 +1,26 @@
-import requests
-import time
-from terminaltables import AsciiTable
-from dotenv import load_dotenv
 import os
+import time
+import requests
 
+from dotenv import load_dotenv
+from terminaltables import AsciiTable
 
-load_dotenv()
 
 HH_URL = "https://api.hh.ru/vacancies"
+
 SUPERJOB_API_URL = "https://api.superjob.ru/2.0/vacancies/"
-SUPERJOB_API_KEY = os.environ["SUPERJOB_API_KEY"]
+
+
+HH_HEADERS = {
+    "HH-User-Agent": "SalaryAnalysis/1.0 (gorbunov.dv.webdev@gmail.com)",
+    "User-Agent": "SalaryAnalysis/1.0 (gorbunov.dv.webdev@gmail.com)"
+}
+
 
 MOSCOW_HH_AREA = 1
 MOSCOW_SJ_TOWN = 4
 
-# (отображаемое имя, поисковый запрос)
+
 LANGUAGES = [
     ("python", "python"),
     ("c", "c"),
@@ -31,15 +37,19 @@ LANGUAGES = [
 def predict_salary(salary_from, salary_to):
     if salary_from and salary_to:
         return (salary_from + salary_to) / 2
+
     if salary_from:
         return float(salary_from)
+
     if salary_to:
         return float(salary_to)
+
     return None
 
 
 def predict_rub_salary_hh(vacancy):
     salary = vacancy.get("salary")
+
     if not salary:
         return None
 
@@ -48,7 +58,7 @@ def predict_rub_salary_hh(vacancy):
 
     return predict_salary(
         salary.get("from"),
-        salary.get("to"),
+        salary.get("to")
     )
 
 
@@ -61,15 +71,20 @@ def predict_rub_salary_for_superJob(vacancy):
 
     if salary_from == 0:
         salary_from = None
+
     if salary_to == 0:
         salary_to = None
 
-    return predict_salary(salary_from, salary_to)
+    return predict_salary(
+        salary_from,
+        salary_to
+    )
 
 
 def get_hh_statistics(search_query):
     page = 0
     per_page = 100
+
     salaries = []
     vacancies_found = 0
 
@@ -81,25 +96,42 @@ def get_hh_statistics(search_query):
             "per_page": per_page,
         }
 
-        response = requests.get(HH_URL, params=params)
+        response = requests.get(
+            HH_URL,
+            headers=HH_HEADERS,
+            params=params
+        )
+
+        if response.status_code != 200:
+            print(response.status_code)
+            print(response.text)
+
         response.raise_for_status()
+
         data = response.json()
 
         vacancies_found = data["found"]
 
         for vacancy in data["items"]:
             salary = predict_rub_salary_hh(vacancy)
+
             if salary is not None:
                 salaries.append(salary)
 
         page += 1
+
         if page >= data["pages"]:
             break
 
         time.sleep(0.2)
 
     vacancies_processed = len(salaries)
-    average_salary = int(sum(salaries) / vacancies_processed) if salaries else 0
+
+    average_salary = (
+        int(sum(salaries) / vacancies_processed)
+        if salaries
+        else 0
+    )
 
     return {
         "vacancies_found": vacancies_found,
@@ -108,13 +140,14 @@ def get_hh_statistics(search_query):
     }
 
 
-def get_superjob_statistics(search_query):
+def get_superjob_statistics(search_query, api_key):
     headers = {
-        "X-Api-App-Id": SUPERJOB_API_KEY
+        "X-Api-App-Id": api_key
     }
 
     page = 0
     count = 100
+
     salaries = []
     vacancies_found = 0
 
@@ -129,15 +162,18 @@ def get_superjob_statistics(search_query):
         response = requests.get(
             SUPERJOB_API_URL,
             headers=headers,
-            params=params,
+            params=params
         )
+
         response.raise_for_status()
+
         data = response.json()
 
         vacancies_found = data["total"]
 
         for vacancy in data["objects"]:
             salary = predict_rub_salary_for_superJob(vacancy)
+
             if salary is not None:
                 salaries.append(salary)
 
@@ -145,10 +181,16 @@ def get_superjob_statistics(search_query):
             break
 
         page += 1
+
         time.sleep(0.2)
 
     vacancies_processed = len(salaries)
-    average_salary = int(sum(salaries) / vacancies_processed) if salaries else 0
+
+    average_salary = (
+        int(sum(salaries) / vacancies_processed)
+        if salaries
+        else 0
+    )
 
     return {
         "vacancies_found": vacancies_found,
@@ -157,12 +199,16 @@ def get_superjob_statistics(search_query):
     }
 
 
-def get_statistics(get_stats_func):
+def get_statistics(get_stats_func, api_key=None):
     statistics = {}
 
     for lang_name, query in LANGUAGES:
         print(f"Собираю данные для {lang_name}...")
-        statistics[lang_name] = get_stats_func(query)
+
+        if api_key:
+            statistics[lang_name] = get_stats_func(query, api_key)
+        else:
+            statistics[lang_name] = get_stats_func(query)
 
     return statistics
 
@@ -186,16 +232,35 @@ def print_statistics(statistics, title):
         ])
 
     table = AsciiTable(table_data, title)
+
     print(table.table)
 
 
 def main():
-    hh_stats = get_statistics(get_hh_statistics)
-    sj_stats = get_statistics(get_superjob_statistics)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
 
-    print_statistics(hh_stats, "HeadHunter Moscow")
-    print()
-    print_statistics(sj_stats, "SuperJob Moscow")
+    env_path = os.path.join(base_dir, ".env")
+
+    load_dotenv(env_path)
+
+    superjob_api_key = os.getenv("SUPERJOB_API_KEY")
+
+    if not superjob_api_key:
+        raise ValueError(
+            "Нет SUPERJOB_API_KEY в переменных окружения"
+        )
+
+
+    sj_statistics = get_statistics(
+        get_superjob_statistics,
+        superjob_api_key
+    )
+
+
+    print_statistics(
+        sj_statistics,
+        "SuperJob Moscow"
+    )
 
 
 if __name__ == "__main__":
